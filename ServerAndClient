@@ -1,0 +1,79 @@
+import socket 
+import keyboard
+import threading 
+import sys
+
+ENCODING = "utf-8"
+header = 16
+port = 3255
+
+class client:
+    def __init__(self, server_to_connect_to):
+        self.clientsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clientsock.connect((server_to_connect_to, port))
+        print(f"Connection to {server_to_connect_to} successful!")
+
+    def send(self, msg):
+        message = msg.encode(ENCODING)
+        message_length = str(len(message)).encode(ENCODING)
+        message_length += b' ' * (header - len(message_length))
+        self.clientsock.send(message_length)
+        self.clientsock.send(message)
+    pass
+
+
+
+def find_ips():
+    possibleips = []
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    for main in range(0,255):
+        for submain in range(0,255):
+            ip = "192.168." + main + "." + submain
+            s.connect((ip,port))
+
+            #if connection successful possibleips.append(ip)
+    return possibleips 
+
+
+
+try: 
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+except socket.error:
+    print("Error in setting up socket\n")
+
+try: 
+    ip = socket.gethostbyname(socket.gethostname()) #find_ip()
+except socket.gaierror:
+    print("Invalid ip\n")
+    ipgood = False
+    #while (ipgood == False) or (!keyboard.is_pressed("ESC")):
+    #    newip = input("\nPlease enter a valid ip: ")
+
+    #NOTE: add exception functionality
+
+addr = (ip, port)
+
+sock.bind(addr)
+sock.listen(5)
+print(f"Server organ listening on: {addr}\n")
+
+
+def handle_client(conn, addr):
+    print(f"{addr} connected to the server\n")
+    while True:
+        message_length = conn.recv(header).decode(ENCODING)
+        message = conn.recv(int(message_length)).decode(ENCODING)
+        print(message)
+
+        if (message == "disconnect"):
+            print(f"disconnecting {addr}")
+            conn.close()
+            exit(0)
+
+
+while True:
+    (connectionsocket, addrsocket) = sock.accept()
+    thread = threading.Thread(target=handle_client, args=(connectionsocket, addrsocket))
+    thread.start()
+
+
