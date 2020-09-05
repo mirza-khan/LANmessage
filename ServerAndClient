@@ -6,6 +6,7 @@ import sys
 ENCODING = "utf-8"
 header = 16
 port = 3255
+one_of_us = False
 
 class client:
     def __init__(self, server_to_connect_to):
@@ -21,17 +22,20 @@ class client:
         self.clientsock.send(message)
     pass
 
-
-
 def find_ips():
     possibleips = []
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    for main in range(0,255):
-        for submain in range(0,255):
-            ip = "192.168." + main + "." + submain
-            s.connect((ip,port))
-
-            #if connection successful possibleips.append(ip)
+    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    for main in range(0,256):
+        for submain in range(0,256):
+            currentip = "192.168." + main + "." + submain
+            s = client(currentip)
+            try:
+                s.send("Are you one of us?")
+            except:
+                one_of_us = False
+            finally:
+                if one_of_us == True:
+                    possibleips.append(currentip)
     return possibleips 
 
 
@@ -69,6 +73,7 @@ def handle_client(conn, addr):
             print(f"disconnecting {addr}")
             conn.close()
             exit(0)
+
 
 
 while True:
